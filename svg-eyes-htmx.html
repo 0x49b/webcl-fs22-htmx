@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Eyes with HTMX</title>
+    <style>
+        body {
+            margin      : 0;
+            box-sizing  : border-box;
+            width       : 100vw;
+            height      : 100vh;
+            font-family : sans-serif;
+        }
+
+        h1 {
+            margin-left      : 3em;
+            -moz-user-select : none;
+            user-select      : none;
+        }
+
+        svg {
+            width    : 100px;
+            height   : 80px;
+            position : absolute;
+        }
+
+        #leftEye {
+            top  : 100px;
+            left : 100px;
+        }
+
+        #rightEye {
+            top  : 100px;
+            left : 250px;
+        }
+    </style>
+</head>
+<body hx-get="/mousemove" hx-trigger="mousemove">
+<h1 hx-get="/blink-eyes" hx-trigger="every 7s">I see where you go... HTMX Style</h1>
+
+<script src="./htmx.min.js"></script>
+<script src="./svg-eyes.js"></script>
+<script>
+
+    // add both eyes
+    document.writeln(eyeView('leftEye'));
+    document.writeln(eyeView('rightEye'));
+
+    // the eye listeners
+    const leftListener  = eyeBinding('#leftEye');
+    const rightListener = eyeBinding('#rightEye');
+
+    // a holder for the mouseposition --> htmx cannot obtain this
+    const mousepos = {
+        clientX: 0,
+        clientY: 0,
+    }
+
+    // set current mousepos, used for the iris movement
+    addEventListener("mousemove", (evt) => {
+        mousepos.clientX = evt.clientX;
+        mousepos.clientY = evt.clientY;
+    });
+
+    // Dispatcher
+    htmx.on("htmx:beforeRequest", function (evt) {
+
+        // do not send ajax request
+        evt.preventDefault();
+
+        // What event was sent
+        switch (evt.detail.pathInfo.path) {
+            case '/mousemove':
+                console.log("mousemove triggered");
+                leftListener.mouseToIris(mousepos);
+                rightListener.mouseToIris(mousepos);
+                break;
+            case '/clicked-leftEye':
+                console.log("leftEye Click triggered");
+                leftListener.closeEye(mousepos);
+                break;
+            case '/clicked-rightEye':
+                console.log("rightEye Click triggered");
+                rightListener.closeEye(mousepos);
+                break;
+            case '/blink-eyes':
+                console.log("blink eyes triggered")
+                leftListener.blinkEyes(mousepos);
+                rightListener.blinkEyes(mousepos);
+                break;
+        }
+    });
+
+</script>
+
+</body>
+</html>
